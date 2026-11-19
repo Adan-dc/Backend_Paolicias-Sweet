@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Spring Boot-MicroservicioReservasApplication<microservicio-reservas>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.microservicios.microservicio_reservas.MicroservicioReservasApplication",
+            "projectName": "microservicio-reservas",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MicroservicioPagoApplication<microservicio-pago>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.microservicios.microservicio_pago.MicroservicioPagoApplication",
+            "projectName": "microservicio-pago",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Spring Boot-MicroservicioComprobantePagoApplication<microservicio-comprobante-pago>",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.microservicio.microservicio_comprobante_pago.MicroservicioComprobantePagoApplication",
+            "projectName": "microservicio-comprobante-pago",
+            "args": "",
+            "envFile": "${workspaceFolder}/.env"
+        }
+    ]
+}
