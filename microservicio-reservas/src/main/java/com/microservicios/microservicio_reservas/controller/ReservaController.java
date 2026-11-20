@@ -18,6 +18,7 @@ import com.microservicios.microservicio_reservas.model.Reserva;
 import com.microservicios.microservicio_reservas.service.ReservaService;
 import com.microservicios.microservicio_reservas.model.ReservaProducto;
 import com.microservicios.microservicio_reservas.model.CrearReservaRequest;
+import com.microservicios.microservicio_reservas.model.ReservaPack;
 
 @RestController 
 @RequestMapping("/api/reservas")
@@ -73,6 +74,14 @@ public class ReservaController {
     }
 
 
+    @PutMapping("/{id}/aprobar-abono")
+    public ResponseEntity<Reserva> aprobarAbono(@PathVariable Long id) {
+            return ResponseEntity.ok(reservaService.aprobarAbono(id)
+        );
+    }
+
+
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         reservaService.eliminar(id);
@@ -90,4 +99,12 @@ public class ReservaController {
 
         return reservaService.obtenerProductosReserva(id);
     }
+
+
+    @GetMapping("/{id}/packs")
+    public List<ReservaPack> obtenerPacks(@PathVariable Long id) {
+
+        return reservaService.obtenerPacksReserva(id);
+    }
+
 }

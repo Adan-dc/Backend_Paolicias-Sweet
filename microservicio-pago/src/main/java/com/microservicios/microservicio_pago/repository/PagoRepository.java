@@ -15,6 +15,20 @@ public interface PagoRepository extends JpaRepository<Pago, Long>{
 
     List<Pago> findByTipoPago(String tipoPago);
 
+
+    boolean existsByReservaIdAndTipoPagoAndEstadoPagoIn(
+        Long reservaId,
+        String tipoPago,
+        List<String> estados
+    );
+
+    boolean existsByReservaIdAndTipoPagoAndEstadoPago(
+        Long reservaId,
+        String tipoPago,
+        String estadoPago
+    );
+
+
     @Query("""
             SELECT p.estadoPago, COUNT(p), SUM(p.monto)
             FROM Pago p
