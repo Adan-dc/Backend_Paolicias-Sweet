@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.microservicios.microservicio_reservas.model.Reserva;
 import com.microservicios.microservicio_reservas.service.ReservaService;
+import com.microservicios.microservicio_reservas.model.ReservaProducto;
 
 @RestController 
 @RequestMapping("/api/reservas")
@@ -79,5 +80,11 @@ public class ReservaController {
     @GetMapping("/resumen")
     public List<Object[]> resumen() {
         return reservaService.resumenPorEstado();
+    }
+
+    @GetMapping("/{id}/productos")
+    public List<ReservaProducto> obtenerProductos(@PathVariable Long id) {
+
+        return reservaService.obtenerProductosReserva(id);
     }
 }

@@ -1,5 +1,15 @@
 package com.microservicios.microservicio_reservas.service;
 
+import java.util.ArrayList;
+
+import org.springframework.web.client.RestClient;
+
+import com.microservicios.microservicio_reservas.model.PackDetalle;
+import com.microservicios.microservicio_reservas.model.ReservaProducto;
+import com.microservicios.microservicio_reservas.repository.ReservaProductoRepository;
+
+import org.springframework.beans.factory.annotation.Value;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +23,20 @@ import jakarta.transaction.Transactional;
 @Service 
 public class ReservaService {
 
+    @Autowired
+    private ReservaProductoRepository reservaProductoRepository;
+
+
     @Autowired 
     private ReservaRepository reservaRepository;
+    
+    @Value("${microservicio.productos.url}")
+    private String productosUrl;
+
+    
+    private final RestClient restClient = RestClient.create();
+
+
 
     public List<Reserva> listarTodos(){
         return reservaRepository.findAll();
@@ -33,27 +55,103 @@ public class ReservaService {
     }
 
     //Todo lo que sea de reservas
-    @Transactional 
-    public Reserva guardar(Reserva reserva){
-        if (reserva.getAsistentes() <=0 || reserva.getAsistentes() > 100){
+
+    @Transactional
+    public Reserva guardar(Reserva reserva) {
+
+        if (reserva.getAsistentes() <= 0 ||
+            reserva.getAsistentes() > 100) {
             throw new RuntimeException(
-                "La cantidad de asistentes debe ser entre 1 y 100"
+                "La cantidad de asistentes debe estar entre 1 y 100"
             );
         }
 
-        if(reserva.getPresupuestoTotal()<0) {
+        if (reserva.getPackId() == null) {
             throw new RuntimeException(
-                "El presupuesto total debe ser mayor a 0"
+                "Debes seleccionar un pack"
+            );
+        }
+
+        
+            PackDetalle pack = restClient.get().uri(productosUrl + "/api/v1/pack/{id}",reserva.getPackId())
+            .retrieve()
+            .body(PackDetalle.class);
+
+
+        if (pack == null || !Boolean.TRUE.equals(pack.getActivo())) {
+            throw new RuntimeException(
+                "El pack no existe o no esta disponible"
+            );
+        }
+
+        if (pack.getPrecio() == null ||
+            pack.getPrecio() < 0) {
+            throw new RuntimeException(
+                "El precio del pack no es valido"
+            );
+        }
+
+        if (pack.getPersonas() == null ||
+            reserva.getAsistentes() > pack.getPersonas()) {
+            throw new RuntimeException(
+                "El pack no cubre la cantidad de asistentes"
+            );
+        }
+
+        if (pack.getProductos() == null ||
+            pack.getProductos().isEmpty()) {
+            throw new RuntimeException(
+                "El pack no contiene productos"
+            );
+        }
+        int totalProductos = 0;
+
+        for (PackDetalle.ItemPack item : pack.getProductos()) {
+
+            if (item.getProducto() == null ||
+                item.getProducto().getId() == null ||
+                item.getCantidad() == null ||
+                item.getCantidad() <= 0) {
+                throw new RuntimeException(
+                    "El pack contiene productos invalidos"
+                );
+            }
+
+            totalProductos = Math.addExact(
+                totalProductos,
+                item.getCantidad()
             );
         }
 
         reserva.setId(null);
         reserva.setEstadoReserva("PENDIENTE");
         reserva.setEstadoAbono("SIN_COMPROBANTE");
+        reserva.setPresupuestoTotal(pack.getPrecio());
+        reserva.setCantidadProductosTotal(totalProductos);
 
-        return reservaRepository.save(reserva);
+        Reserva guardada = reservaRepository.save(reserva);
+
+        List<ReservaProducto> productos = new ArrayList<>();
+
+        for (PackDetalle.ItemPack item : pack.getProductos()) {
+
+            ReservaProducto detalle = new ReservaProducto();
+
+            detalle.setReservaId(guardada.getId());
+            detalle.setProductoId(item.getProducto().getId());
+            detalle.setNombreProducto(item.getProducto().getNombre());
+            detalle.setCantidad(item.getCantidad());
+            detalle.setGrupo(item.getGrupo());
+
+            productos.add(detalle);
+        }
+
+        reservaProductoRepository.saveAll(productos);
+
+        return guardada;
     }
 
+    //
 
     @Transactional 
     public Reserva confirmarReserva(Long id){
@@ -98,6 +196,8 @@ public class ReservaService {
             );
         }
 
+        reservaProductoRepository.deleteByReservaId(id);
+
         reservaRepository.deleteById(id);
     }
 
@@ -108,5 +208,15 @@ public class ReservaService {
     //para el resumen de las reservas por estado
     public List<Object[]> resumenPorEstado(){
         return reservaRepository.resumenPorEstado();
+    }
+
+    public List<ReservaProducto> obtenerProductosReserva(Long reservaId) {
+        if(!reservaRepository.existsById(reservaId)){
+            throw new RuntimeException(
+                "No existe la reserva con el ID: " + reservaId
+            );
+        }
+
+        return reservaProductoRepository.findByReservaId(reservaId);
     }
 }

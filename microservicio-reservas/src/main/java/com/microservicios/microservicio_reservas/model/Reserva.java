@@ -31,4 +31,7 @@ public class Reserva {
     private String estadoReserva; 
     private String estadoAbono;
     private int presupuestoTotal;
+
+    private Long packId; 
+    private int cantidadProductosTotal;
 }
