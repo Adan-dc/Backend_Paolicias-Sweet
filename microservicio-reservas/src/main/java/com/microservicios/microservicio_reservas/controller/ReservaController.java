@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.microservicios.microservicio_reservas.model.Reserva;
 import com.microservicios.microservicio_reservas.service.ReservaService;
 import com.microservicios.microservicio_reservas.model.ReservaProducto;
+import com.microservicios.microservicio_reservas.model.CrearReservaRequest;
 
 @RestController 
 @RequestMapping("/api/reservas")
@@ -54,9 +55,11 @@ public class ReservaController {
         return reservaService.buscarPorFecha(fecha);
     }
 
-    @PostMapping 
-    public ResponseEntity<Reserva> crear(@RequestBody Reserva reserva){
-        return ResponseEntity.ok(reservaService.guardar(reserva));
+    @PostMapping
+    public ResponseEntity<Reserva> crear(
+            @RequestBody CrearReservaRequest datos) {
+
+        return ResponseEntity.ok(reservaService.guardar(datos));
     }
 
     @PutMapping ("/{id}/confirmar")
