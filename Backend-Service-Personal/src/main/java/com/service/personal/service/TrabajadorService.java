@@ -13,6 +13,7 @@ import com.service.personal.model.Trabajador;
 import com.service.personal.repository.TrabajadorRepository;
 
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service 
 public class TrabajadorService {
@@ -20,7 +21,8 @@ public class TrabajadorService {
     private TrabajadorRepository trabajadorRepository;
     @Autowired 
     private WebClient.Builder webClientBuilder;
-
+    @Value("${reservas.base-url}")
+    private String reservasBaseUrl;
      
     public List<Trabajador> listarTodos() {
 
@@ -68,7 +70,8 @@ public class TrabajadorService {
             ReservaDTO reserva = webClientBuilder.build()
                     .get()
                     .uri(
-                            "http://localhost:8081/api/reservas/"
+                            reservasBaseUrl
+                                    + "/api/reservas/"
                                     + trabajador.getIdReservaAsignada()
                     )
                     .retrieve()
@@ -101,7 +104,7 @@ public class TrabajadorService {
 
             ReservaDTO reserva = webClientBuilder.build()
             .get()
-            .uri("http://localhost:8081/api/reservas/" + idReserva)
+            .uri(reservasBaseUrl + "/api/reservas/" + idReserva)
             .retrieve()
             .bodyToMono(ReservaDTO.class)
             .block();

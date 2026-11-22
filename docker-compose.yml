@@ -1,0 +1,101 @@
+services:
+
+  cliente:
+    container_name: paolicias-cliente
+    build:
+      context: ./Backend_Paolicias-Sweet-microservicio-clientes
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8101
+      DB_URL: ${CLIENTE_DB_URL}
+      DB_USER: ${CLIENTE_DB_USER}
+      DB_PASSWORD: ${CLIENTE_DB_PASSWORD}
+
+
+  producto:
+    container_name: paolicias-producto
+    build:
+      context: ./Backend_Paolicias-Sweet-microservicio-productos
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8102
+      DB_URL: ${PRODUCTO_DB_URL}
+      DB_USER: ${PRODUCTO_DB_USER}
+      DB_PASSWORD: ${PRODUCTO_DB_PASSWORD}
+
+
+  costo:
+    container_name: paolicias-costo
+    build:
+      context: ./Backend-Service-Costo
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8103
+      DB_URL: ${COSTO_DB_URL}
+      DB_USER: ${COSTO_DB_USER}
+      DB_PASSWORD: ${COSTO_DB_PASSWORD}
+
+      RESERVAS_BASE_URL: http://127.0.0.1:8106
+      PRODUCTOS_BASE_URL: http://127.0.0.1:8102
+
+
+  comprobante:
+    container_name: paolicias-comprobante
+    build:
+      context: ./microservicio-comprobante-pago
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8104
+      DB_URL: ${COMPROBANTE_DB_URL}
+      DB_USER: ${COMPROBANTE_DB_USER}
+      DB_PASSWORD: ${COMPROBANTE_DB_PASSWORD}
+
+      PAGOS_BASE_URL: http://127.0.0.1:8105
+
+  pago:
+    container_name: paolicias-pago
+    build:
+      context: ./microservicio-pago
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8105
+      DB_URL: ${PAGO_DB_URL}
+      DB_USER: ${PAGO_DB_USER}
+      DB_PASSWORD: ${PAGO_DB_PASSWORD}
+
+      RESERVAS_BASE_URL: http://127.0.0.1:8106
+
+
+  reservas:
+    container_name: paolicias-reservas
+    build:
+      context: ./microservicio-reservas
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8106
+      DB_URL: ${RESERVA_DB_URL}
+      DB_USER: ${RESERVA_DB_USER}
+      DB_PASSWORD: ${RESERVA_DB_PASSWORD}
+
+      PRODUCTOS_URL: http://127.0.0.1:8102
+
+
+  trabajadores:
+    container_name: paolicias-trabajadores
+    build:
+      context: ./Backend-Service-Personal
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      SERVER_PORT: 8107
+      DB_URL: ${TRABAJADORES_DB_URL}
+      DB_USER: ${TRABAJADORES_DB_USER}
+      DB_PASSWORD: ${TRABAJADORES_DB_PASSWORD}
+
+      RESERVAS_BASE_URL: http://127.0.0.1:8106

@@ -18,8 +18,6 @@ import com.microservicios.microservicio_reservas.model.ReservaPack;
 import com.microservicios.microservicio_reservas.repository.ReservaPackRepository;
 
 
-import org.springframework.beans.factory.annotation.Value;
-
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,27 +27,25 @@ import com.microservicios.microservicio_reservas.model.Reserva;
 import com.microservicios.microservicio_reservas.repository.ReservaRepository;
 
 import jakarta.transaction.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service 
 public class ReservaService {
 
     @Autowired
     private ReservaProductoRepository reservaProductoRepository;
-
-
     @Autowired 
     private ReservaRepository reservaRepository;
-
     @Autowired
     private ReservaPackRepository reservaPackRepository;
 
-    
-    @Value("${microservicio.productos.url}")
-    private String productosUrl;
+    private final RestClient restClient;
 
-    
-    private final RestClient restClient = RestClient.create();
-
+    public ReservaService(
+            @Value("${microservicio.productos.url}") String productosUrl
+    ) {
+        this.restClient = RestClient.create(productosUrl);
+    }
 
 
     public List<Reserva> listarTodos(){
@@ -93,7 +89,12 @@ public Reserva guardar(CrearReservaRequest datos) {
         );
     }
 
-    int presupuesto = 0;
+    
+    int presupuesto = Math.multiplyExact(
+        ((datos.getAsistentes() + 9) / 10) * 10,
+        9000
+    );
+
     int totalProductos = 0;
 
     List<ReservaPack> packs = new ArrayList<>();
@@ -112,11 +113,12 @@ public Reserva guardar(CrearReservaRequest datos) {
                 throw new RuntimeException("Pack invalido");
             }
 
+            
             PackDetalle pack = restClient.get()
-                .uri(productosUrl + "/api/v1/pack/{id}",
-                     seleccionado.getPackId())
+                .uri("/api/v1/pack/{id}", seleccionado.getPackId())
                 .retrieve()
                 .body(PackDetalle.class);
+
 
             if (pack == null ||
                 !Boolean.TRUE.equals(pack.getActivo()) ||
@@ -180,7 +182,6 @@ public Reserva guardar(CrearReservaRequest datos) {
         }
     }
 
-    // Procesar productos individuales
     if (tieneProductos) {
 
         for (CrearReservaRequest.ProductoSeleccionado seleccionado
@@ -193,12 +194,11 @@ public Reserva guardar(CrearReservaRequest datos) {
                     "Producto o cantidad invalida"
                 );
             }
-
             ProductoDetalle producto = restClient.get()
-                .uri(productosUrl + "/api/v1/producto/{id}",
-                     seleccionado.getProductoId())
+                .uri("/api/v1/producto/{id}", seleccionado.getProductoId())
                 .retrieve()
                 .body(ProductoDetalle.class);
+
 
             if (producto == null ||
                 producto.getId() == null ||
@@ -242,7 +242,6 @@ public Reserva guardar(CrearReservaRequest datos) {
         );
     }
 
-    // Crear y guardar la reserva
     Reserva reserva = new Reserva();
 
     reserva.setUsuarioEmail(datos.getUsuarioEmail());
@@ -260,14 +259,13 @@ public Reserva guardar(CrearReservaRequest datos) {
 
     Reserva guardada = reservaRepository.save(reserva);
 
-    // Guardar los packs asociados
     for (ReservaPack pack : packs) {
         pack.setReservaId(guardada.getId());
     }
 
     reservaPackRepository.saveAll(packs);
 
-    // Guardar los productos asociados
+
     for (ReservaProducto producto : productos.values()) {
         producto.setReservaId(guardada.getId());
     }
@@ -293,6 +291,27 @@ public Reserva guardar(CrearReservaRequest datos) {
         }
 
         reserva.setEstadoReserva("CONFIRMADA");
+
+        return reservaRepository.save(reserva);
+    }
+
+
+
+    @Transactional
+    public Reserva aprobarAbono(Long id) {
+
+        Reserva reserva = reservaRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException(
+                        "Reserva no encontrada con ID: " + id
+                ));
+
+        if ("CANCELADA".equals(reserva.getEstadoReserva())) {
+            throw new IllegalArgumentException(
+                    "No se puede aprobar el abono de una reserva cancelada"
+            );
+        }
+
+        reserva.setEstadoAbono("ABONADO");
 
         return reservaRepository.save(reserva);
     }
@@ -345,5 +364,17 @@ public Reserva guardar(CrearReservaRequest datos) {
         }
 
         return reservaProductoRepository.findByReservaId(reservaId);
+    }
+
+    
+    public List<ReservaPack> obtenerPacksReserva(Long reservaId) {
+
+        if (!reservaRepository.existsById(reservaId)) {
+            throw new RuntimeException(
+                "No existe una reserva con el ID: " + reservaId
+            );
+        }
+
+        return reservaPackRepository.findByReservaId(reservaId);
     }
 }

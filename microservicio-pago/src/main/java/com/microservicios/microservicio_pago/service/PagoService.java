@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.microservicios.microservicio_pago.model.Pago;
 import com.microservicios.microservicio_pago.repository.PagoRepository;
 import com.microservicios.microservicio_pago.model.ReservaDetalle;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class PagoService {
@@ -18,10 +19,13 @@ public class PagoService {
     private PagoRepository pagoRepository;
 
     
-    private final RestClient restClient =
-            RestClient.create("http://localhost:8081");
+    private final RestClient reservasClient;
 
-
+    public PagoService(
+            @Value("${reservas.base-url}") String reservasBaseUrl
+    ) {
+        this.reservasClient = RestClient.create(reservasBaseUrl);
+    }
 
     public List<Pago> listarTodos() {
         return pagoRepository.findAll();
@@ -68,7 +72,7 @@ public class PagoService {
 
 
         
-        ReservaDetalle reserva = restClient.get()
+        ReservaDetalle reserva = reservasClient.get()
             .uri("/api/reservas/{id}", pago.getReservaId())
             .retrieve()
             .body(ReservaDetalle.class);
@@ -159,8 +163,8 @@ public class PagoService {
             );
         }
         if ("ABONO".equals(pago.getTipoPago())) {
-            restClient.put()
-                    .uri("http://localhost:8081/api/reservas/{id}/aprobar-abono",
+            reservasClient.put()
+                    .uri("/api/reservas/{id}/aprobar-abono",
                             pago.getReservaId())
                     .retrieve()
                     .toBodilessEntity();

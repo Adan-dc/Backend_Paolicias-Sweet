@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.microservicio.microservicio_comprobante_pago.model.ComprobantePago;
 import com.microservicio.microservicio_comprobante_pago.repository.ComprobantePagoRepository;
-
+import org.springframework.beans.factory.annotation.Value;
 
 
 @Service
@@ -31,9 +31,11 @@ public class ComprobantePagoService {
     @Autowired
     private ComprobantePagoRepository comprobantePagoRepository;
 
-
-    private final RestClient pagosClient =
-            RestClient.create("http://localhost:8082");
+    private final RestClient pagosClient;
+ 
+    public ComprobantePagoService(@Value("${pagos.base-url}") String pagosBaseUrl) {
+    this.pagosClient = RestClient.create(pagosBaseUrl);
+    }
 
     private final Path carpetaArchivos =
             Path.of("uploads", "comprobantes")

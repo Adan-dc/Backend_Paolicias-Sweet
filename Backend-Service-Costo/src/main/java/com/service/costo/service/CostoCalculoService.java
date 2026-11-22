@@ -15,8 +15,8 @@ import com.service.costo.repository.CostoCalculoRepository;
 
 import java.util.ArrayList;
 
-import com.service.costo.dto.DetalleCostoReservaDTO;
 import com.service.costo.dto.IngredienteCostoDTO;
+import org.springframework.beans.factory.annotation.Value;
 import com.service.costo.dto.ProductoCostoDTO;
 
 @Service 
@@ -25,12 +25,16 @@ public class CostoCalculoService {
     private CostoCalculoRepository costoCalculoRepository;
     @Autowired 
     private WebClient.Builder webClientBuilder;
+    @Value("${reservas.base-url}")
+    private String reservasBaseUrl;
+    @Value("${productos.base-url}")
+    private String productosBaseUrl;
 
     public CostoCalculo calcularCosto(Long idReserva) {
 
         ReservaDTO reserva = webClientBuilder.build()
                 .get()
-                .uri("http://localhost:8081/api/reservas/" + idReserva)
+                .uri(reservasBaseUrl + "/api/reservas/" + idReserva)
                 .retrieve()
                 .bodyToMono(ReservaDTO.class)
                 .block();
@@ -45,7 +49,8 @@ public class CostoCalculoService {
         List<DetalleCostoReservaDTO> detalles = webClientBuilder.build()
                 .get()
                 .uri(
-                        "http://localhost:8081/api/reservas/"
+                        reservasBaseUrl 
+                                + "/api/reservas/"
                                 + idReserva
                                 + "/productos"
                 )
@@ -71,7 +76,8 @@ public class CostoCalculoService {
             ProductoDTO producto = webClientBuilder.build()
                     .get()
                     .uri(
-                            "http://localhost:8085/api/v1/producto/"
+                                productosBaseUrl 
+                                    + "/api/v1/producto/"
                                     + detalle.getProductoId()
                     )
                     .retrieve()
@@ -117,7 +123,8 @@ public class CostoCalculoService {
         List<DetalleCostoReservaDTO> detalles = webClientBuilder.build()
                 .get()
                 .uri(
-                        "http://localhost:8081/api/reservas/"
+                        reservasBaseUrl 
+                                + "/api/reservas/"
                                 + idReserva
                                 + "/productos"
                 )
@@ -140,7 +147,8 @@ public class CostoCalculoService {
             ProductoDTO producto = webClientBuilder.build()
                     .get()
                     .uri(
-                            "http://localhost:8085/api/v1/producto/"
+                                productosBaseUrl
+                                    + "/api/v1/producto/"
                                     + detalle.getProductoId()
                     )
                     .retrieve()
